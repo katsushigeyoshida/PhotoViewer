@@ -1,0 +1,57 @@
+﻿<Window x:Class="PhotoViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PhotoViewer"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
+    <Grid>
+        <DockPanel>
+            <StatusBar DockPanel.Dock="Top">
+                <TextBlock Text="並べ替え" />
+                <ComboBox Name="cbSort" Width="60" SelectionChanged="cbSort_SelectionChanged" />
+                <CheckBox x:Name="cbRecursive" Content="サブディレクトリ" Click="cbRecursive_Click"
+                          ToolTip="サブディレクトリもファイルを検索"/>
+                <TextBlock Text="お気に入り" />
+                <ComboBox Name="cbSelectFolder" Width="300" SelectionChanged="cbSelectFolder_SelectionChanged" />
+                <Button x:Name="btSelectFolder" Click="btSelectFolder_Click" ToolTip="表示中のフォルダをお気に入りに登録" >
+                    <Image Source="/Icon/DirGo.ico" Width="15" Height="15" />
+                </Button>
+            </StatusBar>
+            <StatusBar DockPanel.Dock="Bottom" Height="20">
+                <CheckBox x:Name="cbOutViewer" Content="外部ビューワー" Margin="10,0,0,0" ToolTip="外部のビューワーで表示する" />
+                <TextBlock Name="tbPgTitle" Margin="10,0,0,0" />
+                <ProgressBar x:Name="pbLoadPhoto" Width="60" Height="10" Margin="10,0,0,0" VerticalAlignment="Bottom" HorizontalAlignment="Left" />
+                <TextBlock x:Name="tbFolderInfo" Height="15" Margin="15,0,0,0" VerticalAlignment="Bottom" />
+            </StatusBar>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="40*" x:Name="directoryTree"/>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="100*"/>
+                </Grid.ColumnDefinitions>
+                <TreeView Grid.Column="0" Name="tvComponent" SelectedItemChanged="tvComponent_SelectedItemChanged" >
+                </TreeView>
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+                <ListView Grid.Column="2" Name="lvPhotoList" SelectionMode="Extended" 
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" MouseDoubleClick="lvPhotoList_MouseDoubleClick"
+                          SelectionChanged="lvPhotoList_SelectionChanged" PreviewKeyDown="lvPhotoList_PreviewKeyDown" >
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Width="100" Height="100">
+                                <TextBlock Text="{Binding title}"></TextBlock>
+                                <Image Width="90" Height="70" Source="{Binding image}" ></Image>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>
