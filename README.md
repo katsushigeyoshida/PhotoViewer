@@ -6,7 +6,7 @@
 
 
 使い方などは[説明書](Document/PhotoViewerManual.pdf)を参照。  
-実行方法は[PhotoViewer.zip](KScriptWin.zip)をダウンロードし適当なフォルダーに展開して KScriptWin.exe を実行する。  
+実行方法は[PhotoViewer.zip](PhotoViewer.zip)をダウンロードし適当なフォルダーに展開して PhotoViewer.exe を実行する。  
 <img src="Image/download.png" width="80%">
 
 
