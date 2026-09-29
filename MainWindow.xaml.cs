@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -10,7 +11,7 @@ namespace PhotoViewer
     /// <summary>
     /// 写真データをリストに登録するためのクラス
     /// </summary>
-    public class Photo
+    public class PhotoData
     {
         public string title { get; set; }
         public string path { get; set; }
@@ -24,7 +25,7 @@ namespace PhotoViewer
         private double mWindowWidth;
         private double mWindowHeight;
 
-        private List<Photo> Photos;
+        private List<PhotoData> Photos;
 
         private int mThumbnailWidth = 80;        //  サムネイル表示のための画像縮小サイズ
         private int mThumbnailHeight = 50;
@@ -40,6 +41,8 @@ namespace PhotoViewer
 
         private ImageView mImageView;
         private string mFolderListPath = "FolderList.csv";
+
+        private GpxReader mGpxReader;
         private YLib ylib = new();
 
         public MainWindow()
@@ -200,11 +203,12 @@ namespace PhotoViewer
                 setPhotoData(mCurFolder);
                 cbSelectFolder.Items.RemoveAt(index);
                 cbSelectFolder.Items.Insert(0, mCurFolder);
+                cbSelectFolder.Text = mCurFolder;
             }
         }
 
         /// <summary>
-        /// お気に入りフォルダの登録
+        /// お気に入りからフォルダの千九田
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -219,15 +223,83 @@ namespace PhotoViewer
             }
         }
 
+        /// <summary>
+        /// フォトリストのキー処理
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void lvPhotoList_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            List<string> fileList = new List<string>();
+            if (0 < lvPhotoList.SelectedItems.Count) {
+                //  複数選択
+                foreach (var item in lvPhotoList.SelectedItems) {
+                    PhotoData photo = (PhotoData)item;
+                    fileList.Add(photo.path);
+                }
+            }
             if (0 <= lvPhotoList.SelectedIndex) {
                 //  ファイル選択
                 int index = lvPhotoList.SelectedIndex;
                 if (e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
-                    if (e.Key == Key.I) {
-                        infoImage(Photos[index].path);
+                    switch (e.Key) {
+                        case Key.C: copyFile(fileList); break;                  //  ファイル転送(コピー)
+                        case Key.D: deleteFile(fileList); break;                //  ファイル削除
+                        case Key.E: setComment(Photos[index].path); break;      //  コメント編集
+                        case Key.G: editCoordinate(Photos[index].path); break;  //  座標編集
+                        case Key.I: infoImage(Photos[index].path); break;       //  イメージ情報表示
+                        case Key.O: ylib.openUrl(Photos[index].path); break;    //  開く
+                        case Key.S: addGpsCoordinate(fileList, ""); break;      //  GPS座標追加
                     }
+                } else {
+                    switch (e.Key) {
+                        case Key.Enter: dispPhotoData(Photos[index].path); break;   //  イメージ表示
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// リストビューのメニュー処理
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            MenuItem menuItem = (MenuItem)e.Source;
+            List<string> fileList = new List<string>();
+            if (0 < lvPhotoList.SelectedItems.Count) {
+                //  複数選択
+                foreach (var item in lvPhotoList.SelectedItems) {
+                    PhotoData photo = (PhotoData)item;
+                    fileList.Add(photo.path);
+                }
+            }
+            if (0 <= lvPhotoList.SelectedIndex) {
+                //  ファイル選択
+                int index = lvPhotoList.SelectedIndex;
+                if (menuItem.Name.CompareTo("lvOpenMenu") == 0) {
+                    //  開く
+                    ylib.openUrl(Photos[index].path);
+                } else if (menuItem.Name.CompareTo("lvDispMenu") == 0) {
+                    //  イメージ表示
+                    dispPhotoData(Photos[index].path);
+                } else if (menuItem.Name.CompareTo("lvCopyMenu") == 0) {
+                    //  ファイルコピー
+                    copyFile(fileList);
+                } else if (menuItem.Name.CompareTo("lvDeleteMenu") == 0) {
+                    //  ファイル削除
+                    deleteFile(fileList);
+                    setPhotoData(mCurFolder);
+                } else if (menuItem.Name.CompareTo("lvCoordinateMenu") == 0) {
+                    //  座標編集
+                    editCoordinate(Photos[index].path);
+                } else if (menuItem.Name.CompareTo("lvGpsCoordinateMenu") == 0) {
+                    //  GPS座標追加
+                    addGpsCoordinate(fileList, "");
+                } else if (menuItem.Name.CompareTo("lvCommentMenu") == 0) {
+                    //  コメント編集
+                    setComment(Photos[index].path);
                 }
             }
         }
@@ -254,22 +326,30 @@ namespace PhotoViewer
 
         private bool setPhotoData(string folder)
         {
+            if (folder == null || folder.Length == 0)
+                return false;
             if (Photos == null)
-                Photos = new List<Photo>();
+                Photos = new List<PhotoData>();
 
             Photos.Clear();
-            List<string> files = new List<string>(ylib.getFiles(Path.Combine(folder, "*.jpg"), mRecursiveFolder));
-            if (files == null) return false;
+            string[] fileArray = ylib.getFiles(Path.Combine(folder, "*.jpg"), mRecursiveFolder);
+            if (fileArray == null) return false;
+            List<string> files = new List<string>(fileArray);
             files.AddRange(new List<string>(ylib.getFiles(Path.Combine(folder, "*.png"), mRecursiveFolder)));
             tbFolderInfo.Text = "ファイル数: " + files.Count;
             List<string> fileList = sortFiles(files, mSortType, mSortReverse);
+            if (500 < fileList.Count) {
+                if (MessageBox.Show($"ファイル数({fileList.Count})が多いので表示に時間がかかりますが続けますか?",
+                    "確認", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
+                    return false;
+            }
 
             tbPgTitle.Text = "読込中";
             pbLoadPhoto.Minimum = 0;
             pbLoadPhoto.Maximum = files.Count;
             pbLoadPhoto.Value = 0;
             foreach (string file in fileList) {
-                Photo photo = new Photo();
+                PhotoData photo = new PhotoData();
                 //photo.image = ylib.getBitmapImage(file, mThumbnailWidth);
                 photo.image = ylib.getThumbnailImage(file, mThumbnailWidth, mThumbnailHeight);
                 photo.title = Path.GetFileName(file);
@@ -279,7 +359,7 @@ namespace PhotoViewer
                 ylib.DoEvents();
             }
             tbPgTitle.Text = "読込完了";
-            lvPhotoList.ItemsSource = new ReadOnlyCollection<Photo>(Photos);
+            lvPhotoList.ItemsSource = new ReadOnlyCollection<PhotoData>(Photos);
             pbLoadPhoto.Value = 0;
 
             return true;
@@ -332,9 +412,11 @@ namespace PhotoViewer
         /// <param name="path">ファイルパス</param>
         private void setPhotoInfo(string path)
         {
-            if (!File.Exists(path))
+            FileInfo fileInfo = new FileInfo(path);
+            if (!fileInfo.Exists)
                 return;
-            Title = "フォトリスト [" + Path.GetFileName(path) + "]";
+            Title = "フォトリスト [" + path + "][" + fileInfo.LastWriteTime + "][" + fileInfo.Length.ToString("N") + "]";
+
             //  ファイルプロパティ表示
             BitmapImage bmpImage = ylib.getBitmapImage(path);
             ExifInfo exifInfo = new ExifInfo(path);
@@ -352,6 +434,62 @@ namespace PhotoViewer
         }
 
         /// <summary>
+        /// ファイルのコピー(コピー先のフォルダ選択あり)
+        /// </summary>
+        /// <param name="files">ファイルリスト</param>
+        private void copyFile(List<string> files)
+        {
+            if (0 < files.Count) {
+                string targetFolder = ylib.folderSelect("コピー先フォルダ", "");
+                if (0 < targetFolder.Length) {
+                    FileCopyDialog dlg = new FileCopyDialog();
+                    dlg.mSrcFiles = files;
+                    dlg.mDestFolder = targetFolder;
+                    dlg.ShowDialog();
+                }
+            }
+        }
+
+        /// <summary>
+        /// ファイルの削除
+        /// </summary>
+        /// <param name="files">ファイルリスト</param>
+        private void deleteFile(List<string> files)
+        {
+            if (0 < files.Count) {
+                FileDeleteDialog dlg = new FileDeleteDialog();
+                dlg.mSrcFiles = files;
+                dlg.ShowDialog();
+            }
+        }
+
+        /// <summary>
+        /// コメントデータを設定する
+        /// </summary>
+        private void setComment(string path)
+        {
+            DateTime lastDateTime = ylib.getFileDateTime(path);
+            ExifInfo exifInfo = new ExifInfo(path);
+            string comment = exifInfo.getUserComment();
+            if (comment.Length <= 0)
+                comment += ylib.getIPTC(path)[4];
+            InputBox dlg = new InputBox();
+            dlg.Owner = this;
+            dlg.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            dlg.Title = "コメント登録";
+            dlg.mEditText = comment;
+            if (dlg.ShowDialog() == true) {
+                if (exifInfo.setUserComment(dlg.mEditText))
+                    if (!exifInfo.save()) {
+                        MessageBox.Show(exifInfo.mErrorMsg);
+                    } else {
+                        setPhotoInfo(path);
+                        ylib.setFileDateTime(path, lastDateTime);
+                    }
+            }
+        }
+
+        /// <summary>
         /// イメージのプロパティ表示
         /// </summary>
         /// <param name="path"></param>
@@ -361,6 +499,74 @@ namespace PhotoViewer
             ExifInfo exifInfo = new ExifInfo(path);
             buf += "\n" + exifInfo.getExifInfoAll();
             messageBox(buf, "属性表示[" + Path.GetFileName(path) + "]");
+        }
+
+        /// <summary>
+        /// 座標データの追加・編集
+        /// </summary>
+        /// <param name="path"></param>
+        private void editCoordinate(string path)
+        {
+            ExifInfo exifInfo = new ExifInfo(path);
+            Point coord = exifInfo.getExifGpsCoordinate();
+            InputBox dlg = new InputBox();
+            dlg.Title = "座標編集(緯度,軽度)";
+            dlg.mEditText = coord.Y + "," + coord.X;
+            if (dlg.ShowDialog() == true) {
+                string[] data = dlg.mEditText.Split(',');
+                if (1 <= data.Length) {
+                    coord.X = ylib.string2double(data[1]);
+                    coord.Y = ylib.string2double(data[0]);
+                    if (exifInfo.setExifGpsCoordinate(coord))
+                        exifInfo.save();
+                }
+            }
+        }
+
+        /// <summary>
+        /// GPXファイルから座標を設定
+        /// </summary>
+        /// <param name="fileList">ファイルパスリスト</param>
+        private void addGpsCoordinate(List<string> fileList, string gpxFolder)
+        {
+            List<string[]> filters = new List<string[]>() {
+                    new string[] { "GPXファイル", "*.gpx;*.gpx" },
+                    new string[] { "すべてのファイル", "*.*"}
+                };
+            string gpxPath = ylib.fileOpenSelectDlg("GPXデータ読込", "", filters);
+            if (0 < gpxPath.Length) {
+                gpxFolder = Path.GetDirectoryName(gpxPath);
+                loadGpxData(gpxPath);
+                int count = 0;
+                foreach (string path in fileList) {
+                    ExifInfo exifInfo = new ExifInfo(path);
+                    string datetime = exifInfo.getDateTime();
+                    char[] sp = new char[] { ':', ' ' };
+                    string[] ta = datetime.Split(sp);
+                    datetime = string.Format("{0}/{1}/{2} {3}:{4}:{5}", ta[0], ta[1], ta[2], ta[3], ta[4], ta[5]);
+                    DateTime dt = DateTime.Parse(datetime);
+                    Point pos = mGpxReader.getCoordinate(dt);
+                    if (!pos.isEmpty()) {
+                        if (exifInfo.setExifGpsCoordinate(pos)) {
+                            exifInfo.save();
+                            count++;
+                        }
+                    }
+                }
+                MessageBox.Show($"{count}/{fileList.Count}の座標を設定");
+            }
+        }
+
+        /// <summary>
+        /// GPXファイルを読み込む
+        /// </summary>
+        /// <param name="path"></param>
+        private void loadGpxData(string path)
+        {
+            mGpxReader = new GpxReader(path, GpxReader.DATATYPE.gpxData);
+            if (mGpxReader.mListGpsData.Count == 0)
+                return;
+            mGpxReader.dataChk();                                    //  エラーデータチェック
         }
 
         /// <summary>

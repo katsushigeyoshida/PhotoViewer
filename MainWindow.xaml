@@ -5,16 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PhotoViewer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="PhotViewer" Height="450" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid>
         <DockPanel>
             <StatusBar DockPanel.Dock="Top">
                 <TextBlock Text="並べ替え" />
                 <ComboBox Name="cbSort" Width="60" SelectionChanged="cbSort_SelectionChanged" />
-                <CheckBox x:Name="cbRecursive" Content="サブディレクトリ" Click="cbRecursive_Click"
+                <CheckBox x:Name="cbRecursive" Content="サブディレクトリを含む" Click="cbRecursive_Click"
                           ToolTip="サブディレクトリもファイルを検索"/>
                 <TextBlock Text="お気に入り" />
-                <ComboBox Name="cbSelectFolder" Width="300" SelectionChanged="cbSelectFolder_SelectionChanged" />
+                <ComboBox Name="cbSelectFolder" Width="250" SelectionChanged="cbSelectFolder_SelectionChanged" />
                 <Button x:Name="btSelectFolder" Click="btSelectFolder_Click" ToolTip="表示中のフォルダをお気に入りに登録" >
                     <Image Source="/Icon/DirGo.ico" Width="15" Height="15" />
                 </Button>
@@ -50,6 +50,18 @@
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
+                    <ListView.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Name="lvDispMenu" Header="イメージ表示 Enter" Click="MenuItem_Click" />
+                            <MenuItem Name="lvPhotoInfoMenu" Header="写真情報 Ctrl+I" Click="MenuItem_Click" />
+                            <MenuItem Name="lvCommentMenu" Header="コメント追加 Ctrl+E" Click="MenuItem_Click" />
+                            <MenuItem Name="lvOpenMenu" Header="開く Ctrl+O" Click="MenuItem_Click" />
+                            <MenuItem Name="lvCopyMenu" Header="ファイルコピー Ctrl+C" Click="MenuItem_Click" />
+                            <MenuItem Name="lvDeleteMenu" Header="ファイル削除 Ctrl+D" Click="MenuItem_Click" />
+                            <MenuItem Name="lvCoordinateMenu" Header="座標編集 Ctrl+G" Click="MenuItem_Click" />
+                            <MenuItem Name="lvGpsCoordinateMenu" Header="GPS座標追加 Ctrl+S" Click="MenuItem_Click" />
+                        </ContextMenu>
+                    </ListView.ContextMenu>
                 </ListView>
             </Grid>
         </DockPanel>

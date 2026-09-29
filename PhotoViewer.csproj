@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Icon\PhotoViewer.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +14,10 @@
     <None Remove="Icon\DirGo.ico" />
     <None Remove="Icon\FolderClose.ico" />
     <None Remove="Icon\HardDisk.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Icon\PhotoViewer.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +47,10 @@
     <Resource Include="Icon\Computer.ico" />
     <Resource Include="Icon\DirGo.ico" />
     <Resource Include="Icon\FolderClose.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Document\" />
   </ItemGroup>
 
 </Project>

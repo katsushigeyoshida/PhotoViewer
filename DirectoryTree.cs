@@ -1,9 +1,5 @@
 ﻿using CoreLib;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection.PortableExecutable;
-using System.Text;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
@@ -28,6 +24,7 @@ namespace PhotoViewer
         public DirectoryTree(string path = null, string iconPath = "")
         {
             if (path == null || path.Length == 0) {
+                mDirectory = null;
                 Header = CreateHeader("PC", "Icon\\Computer.ico");
                 getDrive();
                 this.IsExpanded = true;
@@ -44,6 +41,14 @@ namespace PhotoViewer
                 getDirectory();
             };
 
+            //  折りたたみ処理
+            this.Collapsed += (s, e) => {
+                System.Diagnostics.Debug.WriteLine($"Collapsed: {HeaderToString((StackPanel)Header)}");
+                if (mDirectory != null)
+                    updateDirectory();
+                else
+                    updateDrive();
+            };
         }
 
         /// <summary>
@@ -89,6 +94,120 @@ namespace PhotoViewer
                     Items.Add(new DirectoryTree(directory.FullName, "Icon\\FolderClose.ico"));
             }
             mIsAdd = true;
+        }
+
+        /// <summary>
+        /// 折りたたみ時にドライブ状態を更新する
+        /// </summary>
+        private void updateDrive()
+        {
+            if (mDirectory ==null) {
+                List<DirectoryInfo> drives = ylib.getDrivesInfo();
+                if (drives.Count == Items.Count) {
+                    foreach (var drive in drives) {
+                        if (indexOfItemName(drive.FullName) < 0) {
+                            removeItemsAll();
+                            foreach (DirectoryInfo dr in drives)
+                                Items.Add(new DirectoryTree(dr.FullName, "Icon\\HardDisk.ico"));
+                            return;
+                        }
+                    }
+                } else {
+                    removeItemsAll();
+                    foreach (DirectoryInfo dr in drives)
+                        Items.Add(new DirectoryTree(dr.FullName, "Icon\\HardDisk.ico"));
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 折りたたみ時にディレクトリ状態を更新する
+        /// </summary>
+        private void updateDirectory()
+        {
+            if (mDirectory == null)
+                return;
+            if (Items.Contains(dummy))
+                Items.Remove(dummy);
+            List<DirectoryInfo> directories = ylib.getDirectoriesInfo(mDirectory.FullName);
+            if (directories == null) {
+                removeItemsAll();
+                return;
+            }
+            //  削除されたサブディレトリの除外
+            if (Items != null && 0 < Items.Count) {
+                for (int i = Items.Count - 1; 0 <= i; i--) {
+                    System.Diagnostics.Debug.WriteLine($"updateDirectory: {i} {Items[i].ToString()}");
+                    DirectoryTree dt = (DirectoryTree)Items[i];
+                    if (directories.Count == 0 || directories.Find(x => x.Name == dt.mDirectory.Name) == null) {
+                        System.Diagnostics.Debug.WriteLine($"not directory: {i} [{dt.mDirectory.Name}]");
+                        Items.RemoveAt(i);
+                    } else {
+                        dt.checkedSubDirectory();
+                    }
+                }
+            }
+            //  増えたディレクトリの追加
+            foreach (var di in directories) {
+                if ((di.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0) {
+                    if (indexOfItemName(di.Name) < 0) {
+                        System.Diagnostics.Debug.WriteLine($"not exist: [{di.Name}]");
+                        Items.Add(new DirectoryTree(di.FullName, "Icon\\FolderClose.ico"));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// すべてのItemsを削除する
+        /// </summary>
+        private void removeItemsAll()
+        {
+            for (int i = Items.Count - 1; 0 <= i; i--)
+                Items.RemoveAt(i);
+        }
+
+        /// <summary>
+        /// サブディレトリの有無をチェックする
+        /// サブディレクトリがある時はdummyを登録
+        /// </summary>
+        private void checkedSubDirectory()
+        {
+            if (Items.Count == 0) {
+                List<DirectoryInfo> directories = ylib.getDirectoriesInfo(mDirectory.FullName);
+                if (0 < directories.Count) {
+                    dummy = new TreeViewItem();
+                    Items.Add(dummy);
+                }
+
+            }
+        }
+
+        /// <summary>
+        /// ディレクトリ名の位置を検索(ない時は-1を返す)
+        /// </summary>
+        /// <param name="name">検索名</param>
+        /// <returns>検索位置</returns>
+        private int indexOfItemName(string name)
+        {
+            for (int i = 0; i < Items.Count; i++) {
+                DirectoryTree dt = (DirectoryTree)Items[i];
+                if (dt.mDirectory.Name == name)
+                    return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Header名の取得
+        /// </summary>
+        /// <param name="sp">キャストしたHeader</param>
+        /// <returns>HeaderのText</returns>
+        private string HeaderToString(StackPanel sp)
+        {
+            TextBlock tb = (TextBlock)sp.Children[1];
+            return tb.Text;
         }
     }
 }
