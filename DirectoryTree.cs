@@ -21,7 +21,7 @@ namespace PhotoViewer
         /// </summary>
         /// <param name="path">フルパス</param>
         /// <param name="iconPath">アイコンのパス</param>
-        public DirectoryTree(string path = null, string iconPath = "")
+        public DirectoryTree(string path = null, string iconPath = "", string label = "")
         {
             if (path == null || path.Length == 0) {
                 mDirectory = null;
@@ -30,7 +30,7 @@ namespace PhotoViewer
                 this.IsExpanded = true;
             } else {
                 mDirectory = new DirectoryInfo(path);
-                Header = CreateHeader(mDirectory.Name, iconPath);
+                Header = CreateHeader(mDirectory.Name + label, iconPath);
                 dummy = new TreeViewItem();
                 Items.Add(dummy);
             }
@@ -75,9 +75,13 @@ namespace PhotoViewer
         private void getDrive()
         {
             Items.Remove(dummy);
-            List<DirectoryInfo> drives = ylib.getDrivesInfo();
-            foreach (DirectoryInfo drive in drives) {
-                Items.Add(new DirectoryTree(drive.FullName, "Icon\\HardDisk.ico"));
+            DriveInfo[] driveInfos = DriveInfo.GetDrives();
+            foreach (DriveInfo driveInfo in driveInfos) {
+                string label = "";
+                if (driveInfo.IsReady) {
+                    label = $" [{driveInfo.VolumeLabel}]";
+                }
+                Items.Add(new DirectoryTree(driveInfo.Name, "Icon\\HardDisk.ico", label));
             }
             mIsAdd = true;
         }

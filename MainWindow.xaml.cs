@@ -328,10 +328,7 @@ namespace PhotoViewer
         {
             if (folder == null || folder.Length == 0)
                 return false;
-            if (Photos == null)
-                Photos = new List<PhotoData>();
 
-            Photos.Clear();
             string[] fileArray = ylib.getFiles(Path.Combine(folder, "*.jpg"), mRecursiveFolder);
             if (fileArray == null) return false;
             List<string> files = new List<string>(fileArray);
@@ -343,6 +340,10 @@ namespace PhotoViewer
                     "確認", MessageBoxButton.OKCancel) == MessageBoxResult.Cancel)
                     return false;
             }
+
+            if (Photos == null)
+                Photos = new List<PhotoData>();
+            Photos.Clear();
 
             tbPgTitle.Text = "読込中";
             pbLoadPhoto.Minimum = 0;
