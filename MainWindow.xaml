@@ -58,7 +58,7 @@
                             <MenuItem Name="lvOpenMenu" Header="開く Ctrl+O" Click="MenuItem_Click" />
                             <MenuItem Name="lvCopyMenu" Header="ファイルコピー Ctrl+C" Click="MenuItem_Click" />
                             <MenuItem Name="lvDeleteMenu" Header="ファイル削除 Ctrl+D" Click="MenuItem_Click" />
-                            <MenuItem Name="lvCoordinateMenu" Header="座標編集 Ctrl+G" Click="MenuItem_Click" />
+                            <MenuItem Name="lvCoordinateMenu" Header="緯度経度座標編集 Ctrl+G" Click="MenuItem_Click" />
                             <MenuItem Name="lvGpsCoordinateMenu" Header="GPS座標追加 Ctrl+S" Click="MenuItem_Click" />
                         </ContextMenu>
                     </ListView.ContextMenu>

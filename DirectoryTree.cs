@@ -1,9 +1,10 @@
-﻿using CoreLib;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
-namespace PhotoViewer
+namespace CoreLib
 {
     /// <summary>
     /// ディレクトリリリークラス
@@ -100,12 +101,13 @@ namespace PhotoViewer
             mIsAdd = true;
         }
 
+
         /// <summary>
         /// 折りたたみ時にドライブ状態を更新する
         /// </summary>
         private void updateDrive()
         {
-            if (mDirectory ==null) {
+            if (mDirectory == null) {
                 List<DirectoryInfo> drives = ylib.getDrivesInfo();
                 if (drives.Count == Items.Count) {
                     foreach (var drive in drives) {
