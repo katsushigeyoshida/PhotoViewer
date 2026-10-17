@@ -44,6 +44,7 @@ namespace PhotoViewer
 
         private GpxReader mGpxReader;
         private YLib ylib = new();
+        private YFile yfile = new YFile();
 
         public MainWindow()
         {
@@ -54,7 +55,8 @@ namespace PhotoViewer
             cbSort.ItemsSource = mSortTitle;
             loadFolderList(mFolderListPath);
             tvComponent.Items.Clear();
-            mDirectoryTree = new DirectoryTree();
+            string computerName = Environment.MachineName;
+            mDirectoryTree = new DirectoryTree(null, "", computerName);
             tvComponent.Items.Add(mDirectoryTree);
         }
 
@@ -208,7 +210,7 @@ namespace PhotoViewer
         }
 
         /// <summary>
-        /// お気に入りからフォルダの千九田
+        /// お気に入りからフォルダの選択
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -329,10 +331,10 @@ namespace PhotoViewer
             if (folder == null || folder.Length == 0)
                 return false;
 
-            string[] fileArray = ylib.getFiles(Path.Combine(folder, "*.jpg"), mRecursiveFolder);
+            string[] fileArray = yfile.getFiles(Path.Combine(folder, "*.jpg"), mRecursiveFolder);
             if (fileArray == null) return false;
             List<string> files = new List<string>(fileArray);
-            files.AddRange(new List<string>(ylib.getFiles(Path.Combine(folder, "*.png"), mRecursiveFolder)));
+            files.AddRange(new List<string>(yfile.getFiles(Path.Combine(folder, "*.png"), mRecursiveFolder)));
             tbFolderInfo.Text = "ファイル数: " + files.Count;
             List<string> fileList = sortFiles(files, mSortType, mSortReverse);
             if (500 < fileList.Count) {
@@ -441,7 +443,7 @@ namespace PhotoViewer
         private void copyFile(List<string> files)
         {
             if (0 < files.Count) {
-                string targetFolder = ylib.folderSelect("コピー先フォルダ", "");
+                string targetFolder = yfile.folderSelect("コピー先フォルダ", "");
                 if (0 < targetFolder.Length) {
                     FileCopyDialog dlg = new FileCopyDialog();
                     dlg.mSrcFiles = files;
@@ -469,7 +471,7 @@ namespace PhotoViewer
         /// </summary>
         private void setComment(string path)
         {
-            DateTime lastDateTime = ylib.getFileDateTime(path);
+            DateTime lastDateTime = yfile.getFileDateTime(path);
             ExifInfo exifInfo = new ExifInfo(path);
             string comment = exifInfo.getUserComment();
             if (comment.Length <= 0)
@@ -485,7 +487,7 @@ namespace PhotoViewer
                         MessageBox.Show(exifInfo.mErrorMsg);
                     } else {
                         setPhotoInfo(path);
-                        ylib.setFileDateTime(path, lastDateTime);
+                        yfile.setFileDateTime(path, lastDateTime);
                     }
             }
         }
@@ -534,7 +536,7 @@ namespace PhotoViewer
                     new string[] { "GPXファイル", "*.gpx;*.gpx" },
                     new string[] { "すべてのファイル", "*.*"}
                 };
-            string gpxPath = ylib.fileOpenSelectDlg("GPXデータ読込", "", filters);
+            string gpxPath = yfile.fileOpenSelectDlg("GPXデータ読込", "", filters);
             if (0 < gpxPath.Length) {
                 gpxFolder = Path.GetDirectoryName(gpxPath);
                 loadGpxData(gpxPath);
@@ -579,7 +581,7 @@ namespace PhotoViewer
             List<string> folderList = new List<string>();
             foreach (string path in cbSelectFolder.Items)
                 folderList.Add(path);
-            ylib.saveListData(listPath, folderList);
+            yfile.saveListData(listPath, folderList);
         }
 
         /// <summary>
@@ -588,7 +590,7 @@ namespace PhotoViewer
         /// <param name="listPath"></param>
         private void loadFolderList(string listPath)
         {
-            List<string> list = ylib.loadListData(listPath);
+            List<string> list = yfile.loadListData(listPath);
             if (list == null)
                 return;
             int n = 0;

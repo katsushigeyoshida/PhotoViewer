@@ -59,4 +59,4 @@ https://dotnet.microsoft.com/ja-jp/download
 開発ソフト : Microsoft Visual Studio 2022  
 開発言語　 : C# 10.0 Windows アプリケーション  
 フレームワーク  :  .NET 8.0  
-自作ライブラリ  : CoreLib (YLib,ImageViewDialog,FileCopyDialog,FileDeleteDialog,InputBox,ExifInfo,GpxReader)  
+自作ライブラリ  : [CoreLib](https://github.com/katsushigeyoshida/CoreLib) (YLib,ImageViewDialog,FileCopyDialog,FileDeleteDialog,InputBox,ExifInfo,GpxReader)  

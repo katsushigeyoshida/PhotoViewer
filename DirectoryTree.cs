@@ -16,6 +16,8 @@ namespace CoreLib
         public TreeViewItem dummy;                          //  子のディレトリ情報
 
         private YLib ylib = new();
+        private YFile yfile = new YFile();
+
 
         /// <summary>
         /// コンストラクタ
@@ -26,7 +28,8 @@ namespace CoreLib
         {
             if (path == null || path.Length == 0) {
                 mDirectory = null;
-                Header = CreateHeader("PC", "Icon\\Computer.ico");
+                label = label == "" ? "PC" : $"PC [{label}]";
+                Header = CreateHeader(label, "Icon\\Computer.ico");
                 getDrive();
                 this.IsExpanded = true;
             } else {
@@ -93,7 +96,7 @@ namespace CoreLib
         private void getDirectory()
         {
             Items.Remove(dummy);
-            List<DirectoryInfo> directories = ylib.getDirectoriesInfo(mDirectory.FullName);
+            List<DirectoryInfo> directories = yfile.getDirectoriesInfo(mDirectory.FullName);
             foreach (DirectoryInfo directory in directories) {
                 if ((directory.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0)
                     Items.Add(new DirectoryTree(directory.FullName, "Icon\\FolderClose.ico"));
@@ -108,7 +111,7 @@ namespace CoreLib
         private void updateDrive()
         {
             if (mDirectory == null) {
-                List<DirectoryInfo> drives = ylib.getDrivesInfo();
+                List<DirectoryInfo> drives = yfile.getDrivesInfo();
                 if (drives.Count == Items.Count) {
                     foreach (var drive in drives) {
                         if (indexOfItemName(drive.FullName) < 0) {
@@ -136,7 +139,7 @@ namespace CoreLib
                 return;
             if (Items.Contains(dummy))
                 Items.Remove(dummy);
-            List<DirectoryInfo> directories = ylib.getDirectoriesInfo(mDirectory.FullName);
+            List<DirectoryInfo> directories = yfile.getDirectoriesInfo(mDirectory.FullName);
             if (directories == null) {
                 removeItemsAll();
                 return;
@@ -181,7 +184,7 @@ namespace CoreLib
         private void checkedSubDirectory()
         {
             if (Items.Count == 0) {
-                List<DirectoryInfo> directories = ylib.getDirectoriesInfo(mDirectory.FullName);
+                List<DirectoryInfo> directories = yfile.getDirectoriesInfo(mDirectory.FullName);
                 if (0 < directories.Count) {
                     dummy = new TreeViewItem();
                     Items.Add(dummy);
